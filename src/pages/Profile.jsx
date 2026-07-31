@@ -13,9 +13,11 @@ const roleFunctionLabels = {
 
 export function Profile() {
   const { user, profile, logout } = useAuth()
+  const [editingDisplayName, setEditingDisplayName] = useState(false)
   const [editingNick, setEditingNick] = useState(false)
   const [editingFreeFireId, setEditingFreeFireId] = useState(false)
   const [editingRoleFunction, setEditingRoleFunction] = useState(false)
+  const [displayNameValue, setDisplayNameValue] = useState('')
   const [nickValue, setNickValue] = useState('')
   const [freeFireIdValue, setFreeFireIdValue] = useState('')
   const [roleFunctionValue, setRoleFunctionValue] = useState('')
@@ -26,6 +28,20 @@ export function Profile() {
       await logout()
     } catch (error) {
       console.error('Error logging out:', error)
+    }
+  }
+
+  const handleSaveDisplayName = async () => {
+    if (!displayNameValue.trim()) return
+    setSaving(true)
+    try {
+      await userAPI.updateProfile(user.id, { display_name: displayNameValue.trim() })
+      setEditingDisplayName(false)
+      window.location.reload()
+    } catch (error) {
+      console.error('Error updating display name:', error)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -116,7 +132,44 @@ export function Profile() {
               </div>
               <div className="flex-1">
                 <p className="text-textSecondary text-xs">Nome</p>
-                <p className="text-text font-medium">{displayName}</p>
+                {editingDisplayName ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={displayNameValue}
+                      onChange={(e) => setDisplayNameValue(e.target.value)}
+                      placeholder="Nome de exibição"
+                      className="flex-1 bg-surface2 text-text px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={saving}
+                    />
+                    <button
+                      onClick={handleSaveDisplayName}
+                      disabled={saving}
+                      className="p-2 bg-primary/20 rounded-lg hover:bg-primary/30 transition-colors"
+                    >
+                      <Check className="w-4 h-4 text-primary" />
+                    </button>
+                    <button
+                      onClick={() => setEditingDisplayName(false)}
+                      className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-text font-medium">{displayName}</p>
+                    <button
+                      onClick={() => {
+                        setDisplayNameValue(displayName)
+                        setEditingDisplayName(true)
+                      }}
+                      className="p-1.5 hover:bg-surface2 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-textSecondary" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

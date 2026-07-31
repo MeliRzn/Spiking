@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { User as UserIcon, Target, TrendingUp } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
-import { weeklyGoalsAPI } from '../lib/database'
+import { weeklyGoalsAPI, goalsAPI } from '../lib/database'
 
 export function Home() {
   const { user, profile } = useAuth()
   const [weeklyGoals, setWeeklyGoals] = useState(null)
+  const [userGoal, setUserGoal] = useState(null)
   const [loadingGoals, setLoadingGoals] = useState(true)
 
   useEffect(() => {
     loadWeeklyGoals()
+    loadUserGoal()
   }, [])
 
   const loadWeeklyGoals = async () => {
@@ -23,6 +25,27 @@ export function Home() {
     } finally {
       setLoadingGoals(false)
     }
+  }
+
+  const loadUserGoal = async () => {
+    try {
+      const now = new Date()
+      const weekNumber = getWeekNumber(now)
+      const year = now.getFullYear()
+      const data = await goalsAPI.getHistory(user.id)
+      const currentWeekGoal = data.find(g => g.week_number === weekNumber && g.year === year)
+      setUserGoal(currentWeekGoal)
+    } catch (error) {
+      console.error('Error loading user goal:', error)
+    }
+  }
+
+  const getWeekNumber = (date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+    const dayNum = d.getUTCDay() || 7
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
   }
 
   const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Jogador'
@@ -93,7 +116,21 @@ export function Home() {
               </div>
               <div>
                 <h3 className="font-medium text-text">Status da Meta da Semana</h3>
-                <p className="text-textSecondary text-sm">Aguardando dados</p>
+                {loadingGoals ? (
+                  <p className="text-textSecondary text-sm">Carregando...</p>
+                ) : userGoal ? (
+                  <p className={`text-sm font-medium ${
+                    userGoal.status === 'approved' ? 'text-green-400' :
+                    userGoal.status === 'rejected' ? 'text-red-400' :
+                    'text-yellow-400'
+                  }`}>
+                    {userGoal.status === 'approved' ? 'Aprovado' :
+                     userGoal.status === 'rejected' ? 'Rejeitado' :
+                     'Pendente de aprovação'}
+                  </p>
+                ) : (
+                  <p className="text-textSecondary text-sm">Aguardando upload</p>
+                )}
               </div>
             </div>
           </div>

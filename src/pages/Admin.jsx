@@ -31,6 +31,7 @@ export function Admin() {
   const [loadingMembers, setLoadingMembers] = useState(false)
   const [pendingUploads, setPendingUploads] = useState([])
   const [loadingUploads, setLoadingUploads] = useState(false)
+  const [expandedImage, setExpandedImage] = useState(null)
 
   const announcements = []
   const statistics = null
@@ -330,7 +331,8 @@ export function Admin() {
                           <img 
                             src={upload.war_points_image} 
                             alt="Pontos de Guerra"
-                            className="w-full h-32 object-cover rounded-lg"
+                            className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setExpandedImage(upload.war_points_image)}
                           />
                         )}
                       </div>
@@ -340,7 +342,8 @@ export function Admin() {
                           <img 
                             src={upload.weekly_points_image} 
                             alt="Pontos Semanais"
-                            className="w-full h-32 object-cover rounded-lg"
+                            className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setExpandedImage(upload.weekly_points_image)}
                           />
                         )}
                       </div>
@@ -536,6 +539,21 @@ export function Admin() {
           </div>
         )}
       </div>
+
+      {/* Expanded Image Modal */}
+      {expandedImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50"
+          onClick={() => setExpandedImage(null)}
+        >
+          <img 
+            src={expandedImage} 
+            alt="Imagem expandida"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }

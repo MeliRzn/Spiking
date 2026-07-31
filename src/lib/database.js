@@ -135,7 +135,7 @@ export const goalsAPI = {
       .from('goals')
       .select(`
         *,
-        users:user_id (display_name, nick, email)
+        users:user_id (display_name, nick, email, photo_url)
       `)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -879,7 +879,7 @@ export const searchAPI = {
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('role', role)
+      .ilike('role', role)
       .is('deleted_at', null)
       .is('is_blocked', false)
     
@@ -892,7 +892,7 @@ export const searchAPI = {
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('role_function', roleFunction)
+      .ilike('role_function', roleFunction)
       .is('deleted_at', null)
       .is('is_blocked', false)
     
