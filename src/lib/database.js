@@ -20,9 +20,12 @@ export const userAPI = {
       .eq('id', userId)
       .single()
     
+    // If profile doesn't exist (PGRST116), return null instead of throwing
+    if (error && error.code === 'PGRST116') return null
     if (error) throw error
     return data
   },
+
 
   // Create or update user profile (upsert)
   upsertProfile: async (userData) => {
@@ -235,11 +238,13 @@ export const membersAPI = {
     const { data, error } = await supabase
       .from('users')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
     
     if (error) throw error
     return data
   },
+
 
   // Update member role
   updateRole: async (userId, role) => {
@@ -832,16 +837,18 @@ export const lineInvitesAPI = {
 export const searchAPI = {
   // Search users by various fields
   searchUsers: async (query) => {
+    // Search by nick, display_name, and free_fire_id (most common fields)
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .or(`nick.ilike.%${query}%,short_id.ilike.%${query}%,free_fire_id.ilike.%${query}%,display_name.ilike.%${query}%`)
+      .or(`nick.ilike.%${query}%,display_name.ilike.%${query}%,free_fire_id.ilike.%${query}%`)
       .is('deleted_at', null)
       .is('is_blocked', false)
     
     if (error) throw error
     return data
   },
+
 
   // Search by short ID
   findByShortId: async (shortId) => {
@@ -889,16 +896,30 @@ export const searchAPI = {
 
   // Search by function
   searchByFunction: async (roleFunction) => {
+    // Map Portuguese labels to internal values
+    const functionMap = {
+      'rush': 'rush',
+      'full gas': 'full_gas',
+      'full_gas': 'full_gas',
+      'suporte': 'suporte',
+      'curandeiro': 'curandeiro',
+      'flex': 'flex'
+    }
+    
+    const normalized = roleFunction.toLowerCase().trim()
+    const internalValue = functionMap[normalized] || normalized
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .ilike('role_function', roleFunction)
+      .ilike('role_function', internalValue)
       .is('deleted_at', null)
       .is('is_blocked', false)
     
     if (error) throw error
     return data
   }
+
 }
 
 // ============================================================================

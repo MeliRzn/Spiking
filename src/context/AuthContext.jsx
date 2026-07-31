@@ -9,6 +9,16 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const generateShortId = () => {
+    // Generate a unique 6-character short ID
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let result = ''
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return result
+  }
+
   const createOrUpdateProfile = async (authUser) => {
     try {
       // Check if profile exists
@@ -29,6 +39,7 @@ export function AuthProvider({ children }) {
       }
 
       // Create new profile only if doesn't exist
+      console.log('Creating new profile for user:', authUser.id, authUser.email)
       const newProfile = await userAPI.upsertProfile({
         id: authUser.id,
         email: authUser.email,
@@ -36,16 +47,21 @@ export function AuthProvider({ children }) {
         photo_url: photoUrl,
         nick: null,
         free_fire_id: null,
+        short_id: generateShortId(),
         role: 'member',
+        is_blocked: false,
+        deleted_at: null,
         created_at: new Date().toISOString()
       })
-
+      console.log('Profile created successfully:', newProfile)
       setProfile(newProfile)
       return newProfile
     } catch (error) {
       console.error('Error creating profile:', error)
+      alert('Erro ao criar perfil. Tente fazer login novamente.')
     }
   }
+
 
   useEffect(() => {
     // Check active session
