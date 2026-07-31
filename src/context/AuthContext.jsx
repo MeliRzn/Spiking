@@ -28,6 +28,12 @@ export function AuthProvider({ children }) {
       const photoUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null
 
       if (existingProfile) {
+        // Generate short_id if it doesn't exist (for profiles created before this feature)
+        if (!existingProfile.short_id) {
+          const updatedProfile = await userAPI.updateProfile(authUser.id, { short_id: generateShortId() })
+          setProfile(updatedProfile)
+          return updatedProfile
+        }
         // Update profile if photo_url changed
         if (existingProfile.photo_url !== photoUrl) {
           const updatedProfile = await userAPI.updateProfile(authUser.id, { photo_url: photoUrl })
@@ -37,6 +43,7 @@ export function AuthProvider({ children }) {
         setProfile(existingProfile)
         return existingProfile
       }
+
 
       // Create new profile only if doesn't exist
       console.log('Creating new profile for user:', authUser.id, authUser.email)

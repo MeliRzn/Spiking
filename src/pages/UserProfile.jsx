@@ -137,19 +137,18 @@ export function UserProfile() {
             </div>
           </div>
 
-          {profile.free_fire_id && (
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-text">ID Free Fire</h3>
-                  <p className="text-textSecondary text-sm">{profile.free_fire_id}</p>
-                </div>
+          <div className="glass rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                <Hash className="w-5 h-5 text-orange-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-text">ID Free Fire</h3>
+                <p className="text-textSecondary text-sm">{profile.free_fire_id || 'Não definido'}</p>
               </div>
             </div>
-          )}
+          </div>
+
 
           <div className="glass rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -163,21 +162,20 @@ export function UserProfile() {
             </div>
           </div>
 
-          {profile.role_function && (
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-text">Função</h3>
-                  <p className="text-textSecondary text-sm">
-                    {roleFunctionLabels[profile.role_function] || profile.role_function}
-                  </p>
-                </div>
+          <div className="glass rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-text">Função</h3>
+                <p className="text-textSecondary text-sm">
+                  {profile.role_function ? (roleFunctionLabels[profile.role_function] || profile.role_function) : 'Não definido'}
+                </p>
               </div>
             </div>
-          )}
+          </div>
+
         </div>
       </div>
     </div>
