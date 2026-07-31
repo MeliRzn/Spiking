@@ -15,11 +15,9 @@ export function Profile() {
   const { user, profile, logout } = useAuth()
   const [editingNick, setEditingNick] = useState(false)
   const [editingFreeFireId, setEditingFreeFireId] = useState(false)
-  const [editingShortId, setEditingShortId] = useState(false)
   const [editingRoleFunction, setEditingRoleFunction] = useState(false)
   const [nickValue, setNickValue] = useState('')
   const [freeFireIdValue, setFreeFireIdValue] = useState('')
-  const [shortIdValue, setShortIdValue] = useState('')
   const [roleFunctionValue, setRoleFunctionValue] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -54,21 +52,6 @@ export function Profile() {
       window.location.reload()
     } catch (error) {
       console.error('Error updating Free Fire ID:', error)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleSaveShortId = async () => {
-    if (!shortIdValue.trim()) return
-    setSaving(true)
-    try {
-      await userAPI.updateProfile(user.id, { short_id: shortIdValue.trim() })
-      setEditingShortId(false)
-      window.location.reload()
-    } catch (error) {
-      console.error('Error updating short ID:', error)
-      alert('Erro ao salvar ID curto. Verifique se já está em uso.')
     } finally {
       setSaving(false)
     }
@@ -255,44 +238,7 @@ export function Profile() {
               </div>
               <div className="flex-1">
                 <p className="text-textSecondary text-xs">ID Curto</p>
-                {editingShortId ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="text"
-                      value={shortIdValue}
-                      onChange={(e) => setShortIdValue(e.target.value)}
-                      placeholder="ID único do sistema"
-                      className="flex-1 bg-surface2 text-text px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={saving}
-                    />
-                    <button
-                      onClick={handleSaveShortId}
-                      disabled={saving}
-                      className="p-2 bg-primary/20 rounded-lg hover:bg-primary/30 transition-colors"
-                    >
-                      <Check className="w-4 h-4 text-primary" />
-                    </button>
-                    <button
-                      onClick={() => setEditingShortId(false)}
-                      className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
-                    >
-                      <X className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-text font-medium">{shortId}</p>
-                    <button
-                      onClick={() => {
-                        setShortIdValue(shortId === 'Não definido' ? '' : shortId)
-                        setEditingShortId(true)
-                      }}
-                      className="p-1.5 hover:bg-surface2 rounded-lg transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4 text-textSecondary" />
-                    </button>
-                  </div>
-                )}
+                <p className="text-text font-medium mt-1">{shortId}</p>
               </div>
             </div>
           </div>
