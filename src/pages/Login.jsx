@@ -30,7 +30,7 @@ export function Login() {
         <div className="w-32 h-32 flex items-center justify-center mb-4">
           <img 
             src="/logo.png" 
-            alt="Logo da Guilda" 
+            alt="Logo da Guilda"
             className="w-full h-full object-contain"
           />
         </div>
