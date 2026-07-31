@@ -14,7 +14,16 @@ export function AuthProvider({ children }) {
       // Check if profile exists
       const existingProfile = await userAPI.getProfile(authUser.id)
 
+      // Always sync photo_url from Discord
+      const photoUrl = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null
+
       if (existingProfile) {
+        // Update profile if photo_url changed
+        if (existingProfile.photo_url !== photoUrl) {
+          const updatedProfile = await userAPI.updateProfile(authUser.id, { photo_url: photoUrl })
+          setProfile(updatedProfile)
+          return updatedProfile
+        }
         setProfile(existingProfile)
         return existingProfile
       }
@@ -24,7 +33,7 @@ export function AuthProvider({ children }) {
         id: authUser.id,
         email: authUser.email,
         display_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0],
-        photo_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
+        photo_url: photoUrl,
         nick: null,
         free_fire_id: null,
         role: 'member',
