@@ -7,6 +7,7 @@ import { Upload } from './pages/Upload'
 import { History } from './pages/History'
 import { Ranking } from './pages/Ranking'
 import { Profile } from './pages/Profile'
+import { UserProfile } from './pages/UserProfile'
 import { Admin } from './pages/Admin'
 import { Lines } from './pages/Lines'
 import { LineDetails } from './pages/LineDetails'
@@ -80,6 +81,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
             </ProtectedRoute>
           }
         />

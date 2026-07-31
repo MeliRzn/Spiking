@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Upload as UploadIcon, X, Image as ImageIcon } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { goalsAPI } from '../lib/database'
+import { useAuth } from '../context/AuthContext'
 
 export function Upload() {
+  const { user } = useAuth()
   const [warPointsImage, setWarPointsImage] = useState(null)
   const [weeklyPointsImage, setWeeklyPointsImage] = useState(null)
   const [warPointsPreview, setWarPointsPreview] = useState(null)
@@ -44,11 +47,7 @@ export function Upload() {
     setUploading(true)
     
     try {
-      // TODO: Implement actual upload logic to backend
-      console.log('Uploading images:', { warPointsImage, weeklyPointsImage })
-      
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await goalsAPI.upload(user.id, warPointsImage, weeklyPointsImage)
       
       alert('Comprovantes enviados com sucesso!')
       

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { linesAPI, lineInvitesAPI } from '../lib/database'
-import { Users, Plus, Search, UserPlus, Crown, LogOut, Bell, Check, X } from 'lucide-react'
+import { Users, Plus, Search, UserPlus, Crown, LogOut, Bell, Check, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
 
 export function Lines() {
   const { user, profile } = useAuth()
   const [lines, setLines] = useState([])
   const [userLine, setUserLine] = useState(null)
+  const [userLineMembers, setUserLineMembers] = useState([])
+  const [showMembers, setShowMembers] = useState(false)
   const [pendingInvites, setPendingInvites] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -19,6 +21,7 @@ export function Lines() {
   const [creating, setCreating] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [respondingInvite, setRespondingInvite] = useState(null)
+  const [deletingLine, setDeletingLine] = useState(false)
 
   useEffect(() => {
     loadLines()
@@ -41,8 +44,20 @@ export function Lines() {
     try {
       const data = await linesAPI.getUserLine(user.id)
       setUserLine(data)
+      if (data) {
+        loadLineMembers(data.id)
+      }
     } catch (error) {
       console.error('Error loading user line:', error)
+    }
+  }
+
+  const loadLineMembers = async (lineId) => {
+    try {
+      const data = await linesAPI.getById(lineId)
+      setUserLineMembers(data.line_members || [])
+    } catch (error) {
+      console.error('Error loading line members:', error)
     }
   }
 
@@ -106,10 +121,28 @@ export function Lines() {
     try {
       await linesAPI.removeMember(userLine.id, user.id)
       setUserLine(null)
+      setUserLineMembers([])
       loadLines()
     } catch (error) {
       console.error('Error leaving line:', error)
       alert('Erro ao sair da linha')
+    }
+  }
+
+  const handleDeleteLine = async () => {
+    if (!confirm('Tem certeza que deseja deletar esta linha? Esta ação não pode ser desfeita e todos os membros serão removidos.')) return
+    setDeletingLine(true)
+    try {
+      await linesAPI.delete(userLine.id)
+      setUserLine(null)
+      setUserLineMembers([])
+      loadLines()
+      alert('Linha deletada com sucesso!')
+    } catch (error) {
+      console.error('Error deleting line:', error)
+      alert('Erro ao deletar linha')
+    } finally {
+      setDeletingLine(false)
     }
   }
 
@@ -168,18 +201,77 @@ export function Lines() {
                   <p className="text-textSecondary text-sm">Sua linha</p>
                 </div>
               </div>
-              {userLine.leader_id === user.id && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="p-2 bg-primary/20 rounded-lg hover:bg-primary/30 transition-colors"
-                >
-                  <UserPlus className="w-5 h-5 text-primary" />
-                </button>
-              )}
+              <div className="flex gap-2">
+                {userLine.leader_id === user.id && (
+                  <>
+                    <button
+                      onClick={() => setShowInviteModal(true)}
+                      className="p-2 bg-primary/20 rounded-lg hover:bg-primary/30 transition-colors"
+                    >
+                      <UserPlus className="w-5 h-5 text-primary" />
+                    </button>
+                    <button
+                      onClick={handleDeleteLine}
+                      disabled={deletingLine}
+                      className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-5 h-5 text-red-400" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
             {userLine.description && (
               <p className="text-textSecondary text-sm mb-4">{userLine.description}</p>
             )}
+            
+            {/* Expandable Members */}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowMembers(!showMembers)}
+                className="w-full py-2 px-3 rounded-lg bg-surface2 hover:bg-surface3 transition-colors flex items-center justify-between"
+              >
+                <span className="text-sm font-medium text-text">
+                  Membros ({userLineMembers.length}/8)
+                </span>
+                {showMembers ? (
+                  <ChevronUp className="w-4 h-4 text-textSecondary" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-textSecondary" />
+                )}
+              </button>
+              {showMembers && (
+                <div className="mt-2 max-h-48 overflow-y-auto space-y-2">
+                  {userLineMembers.map((member) => (
+                    <div key={member.user_id} className="flex items-center gap-3 p-2 rounded-lg bg-surface2">
+                      {member.users?.photo_url ? (
+                        <img
+                          src={member.users.photo_url}
+                          alt={member.users.display_name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-surface3 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-textSecondary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text truncate">
+                          {member.users?.display_name || member.users?.nick || 'Sem nome'}
+                        </p>
+                        <p className="text-xs text-textSecondary">
+                          {member.users?.short_id || 'Sem ID'}
+                        </p>
+                      </div>
+                      {member.users?.id === userLine.leader_id && (
+                        <Crown className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handleLeaveLine}
               className="w-full py-3 rounded-xl font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2"

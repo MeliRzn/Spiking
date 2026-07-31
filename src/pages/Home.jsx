@@ -1,9 +1,29 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { User as UserIcon, Target, TrendingUp } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
+import { weeklyGoalsAPI } from '../lib/database'
 
 export function Home() {
   const { user, profile } = useAuth()
+  const [weeklyGoals, setWeeklyGoals] = useState(null)
+  const [loadingGoals, setLoadingGoals] = useState(true)
+
+  useEffect(() => {
+    loadWeeklyGoals()
+  }, [])
+
+  const loadWeeklyGoals = async () => {
+    setLoadingGoals(true)
+    try {
+      const data = await weeklyGoalsAPI.getCurrent()
+      setWeeklyGoals(data)
+    } catch (error) {
+      console.error('Error loading weekly goals:', error)
+    } finally {
+      setLoadingGoals(false)
+    }
+  }
 
   const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Jogador'
   const photoURL = profile?.photo_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null
@@ -79,14 +99,44 @@ export function Home() {
           </div>
         </div>
 
-        {/* Weekly Goal Status - Empty State */}
+        {/* Weekly Goal Status */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold text-text mb-4">Meta da Semana</h3>
-          <EmptyState 
-            icon={Target}
-            title="Nenhuma meta definida"
-            description="Configure sua meta semanal para começar a acompanhar seu progresso."
-          />
+          {loadingGoals ? (
+            <div className="text-center py-8">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
+          ) : weeklyGoals ? (
+            <div className="glass rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-text">Semana {weeklyGoals.week_number} - {weeklyGoals.year}</h3>
+                  <p className="text-textSecondary text-sm">
+                    {new Date(weeklyGoals.start_date).toLocaleDateString('pt-BR')} - {new Date(weeklyGoals.end_date).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass rounded-xl p-4">
+                  <p className="text-textSecondary text-xs mb-1">Pontos de Guerra</p>
+                  <p className="text-2xl font-bold text-text">{weeklyGoals.war_points_target}</p>
+                </div>
+                <div className="glass rounded-xl p-4">
+                  <p className="text-textSecondary text-xs mb-1">Pontos Semanais</p>
+                  <p className="text-2xl font-bold text-text">{weeklyGoals.weekly_points_target}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <EmptyState 
+              icon={Target}
+              title="Nenhuma meta definida"
+              description="Configure sua meta semanal para começar a acompanhar seu progresso."
+            />
+          )}
         </div>
       </div>
     </div>

@@ -64,8 +64,7 @@ export function SearchPage() {
   }
 
   const handleViewProfile = (userId) => {
-    // Navigate to profile view (you may need to create a public profile page)
-    navigate(`/profile`)
+    navigate(`/profile/${userId}`)
   }
 
   return (
@@ -114,8 +113,8 @@ export function SearchPage() {
               placeholder={
                 searchType === 'short_id' ? 'Digite o ID curto...' :
                 searchType === 'line' ? 'Digite o nome da linha...' :
-                searchType === 'role' ? 'Digite o cargo (admin, member, leader)...' :
-                searchType === 'function' ? 'Digite a função (rush, full_gas, suporte, curandeiro, flex)...' :
+                searchType === 'role' ? 'Digite o cargo...' :
+                searchType === 'function' ? 'Digite a função...' :
                 'Digite nick, ID ou nome...'
               }
               className="w-full pl-12 pr-4 py-4 rounded-xl bg-surface2 border border-border text-text placeholder-textSecondary focus:outline-none focus:border-primary"
@@ -169,7 +168,11 @@ export function SearchPage() {
                 } else {
                   // It's a user
                   return (
-                    <div key={result.id} className="glass rounded-2xl p-4">
+                    <div 
+                      key={result.id} 
+                      className="glass rounded-2xl p-4 cursor-pointer hover:bg-surface2/50 transition-colors"
+                      onClick={() => handleViewProfile(result.id)}
+                    >
                       <div className="flex items-center gap-3 mb-3">
                         {result.photo_url ? (
                           <img
