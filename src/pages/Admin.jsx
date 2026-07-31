@@ -19,19 +19,19 @@ import {
 } from 'lucide-react'
 import { EmptyState } from '../components/EmptyState'
 import { useAuth } from '../context/AuthContext'
-import { weeklyGoalsAPI, membersAPI, userAPI } from '../lib/database'
+import { weeklyGoalsAPI, membersAPI, userAPI, goalsAPI } from '../lib/database'
 
 export function Admin() {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const [activeTab, setActiveTab] = useState('goals')
   const [warPointsTarget, setWarPointsTarget] = useState('')
   const [weeklyPointsTarget, setWeeklyPointsTarget] = useState('')
   const [saving, setSaving] = useState(false)
   const [membersList, setMembersList] = useState([])
   const [loadingMembers, setLoadingMembers] = useState(false)
+  const [pendingUploads, setPendingUploads] = useState([])
+  const [loadingUploads, setLoadingUploads] = useState(false)
 
-  // TODO: Fetch actual data from database
-  const pendingUploads = []
   const announcements = []
   const statistics = null
 
@@ -47,8 +47,22 @@ export function Admin() {
   useEffect(() => {
     if (activeTab === 'members') {
       loadMembers()
+    } else if (activeTab === 'uploads') {
+      loadPendingUploads()
     }
   }, [activeTab])
+
+  const loadPendingUploads = async () => {
+    setLoadingUploads(true)
+    try {
+      const data = await goalsAPI.getPending()
+      setPendingUploads(data)
+    } catch (error) {
+      console.error('Error loading uploads:', error)
+    } finally {
+      setLoadingUploads(false)
+    }
+  }
 
   const loadMembers = async () => {
     setLoadingMembers(true)
@@ -69,13 +83,14 @@ export function Admin() {
       const weekNumber = getWeekNumber(new Date())
       const year = new Date().getFullYear()
       
-      await weeklyGoalsAPI.create({
+      await weeklyGoalsAPI.upsert({
         week_number: weekNumber,
         year,
         war_points_target: parseInt(warPointsTarget),
         weekly_points_target: parseInt(weeklyPointsTarget),
         start_date: getStartOfWeek(new Date()),
-        end_date: getEndOfWeek(new Date())
+        end_date: getEndOfWeek(new Date()),
+        is_active: true
       })
       
       alert('Metas definidas com sucesso!')
@@ -169,6 +184,30 @@ export function Admin() {
     }
   }
 
+  const handleApproveUpload = async (goalId) => {
+    try {
+      await goalsAPI.approve(goalId, user.id)
+      loadPendingUploads()
+      alert('Upload aprovado com sucesso!')
+    } catch (error) {
+      console.error('Error approving upload:', error)
+      alert('Erro ao aprovar upload')
+    }
+  }
+
+  const handleRejectUpload = async (goalId) => {
+    const reason = prompt('Motivo da rejeição:')
+    if (!reason) return
+    try {
+      await goalsAPI.reject(goalId, reason)
+      loadPendingUploads()
+      alert('Upload rejeitado com sucesso!')
+    } catch (error) {
+      console.error('Error rejecting upload:', error)
+      alert('Erro ao rejeitar upload')
+    }
+  }
+
   return (
     <div className="min-h-screen pt-safe pb-24 px-4">
       <div className="animate-fadeIn">
@@ -252,7 +291,11 @@ export function Admin() {
 
         {activeTab === 'uploads' && (
           <div>
-            {pendingUploads.length === 0 ? (
+            {loadingUploads ? (
+              <div className="text-center py-8">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              </div>
+            ) : pendingUploads.length === 0 ? (
               <EmptyState 
                 icon={Target}
                 title="Nenhum upload pendente"
@@ -262,7 +305,62 @@ export function Admin() {
               <div className="space-y-3">
                 {pendingUploads.map((upload) => (
                   <div key={upload.id} className="glass rounded-2xl p-4">
-                    {/* Upload item content */}
+                    <div className="flex items-center gap-3 mb-3">
+                      {upload.users?.photo_url ? (
+                        <img 
+                          src={upload.users.photo_url} 
+                          alt={upload.users.display_name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-surface2 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-textSecondary" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h3 className="font-medium text-text">{upload.users?.display_name || upload.users?.email}</h3>
+                        <p className="text-textSecondary text-sm">{upload.users?.nick || 'Sem nick'}</p>
+                        <p className="text-textSecondary text-xs">Semana {upload.week_number} - {upload.year}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-textSecondary text-xs mb-1">Pontos de Guerra</p>
+                        {upload.war_points_image && (
+                          <img 
+                            src={upload.war_points_image} 
+                            alt="Pontos de Guerra"
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-textSecondary text-xs mb-1">Pontos Semanais</p>
+                        {upload.weekly_points_image && (
+                          <img 
+                            src={upload.weekly_points_image} 
+                            alt="Pontos Semanais"
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApproveUpload(upload.id)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Bateu
+                      </button>
+                      <button
+                        onClick={() => handleRejectUpload(upload.id)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Não Bateu
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

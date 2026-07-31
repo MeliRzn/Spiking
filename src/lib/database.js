@@ -520,6 +520,20 @@ export const weeklyGoalsAPI = {
     return goal
   },
 
+  // Create or update weekly goal (upsert)
+  upsert: async (data) => {
+    const { data: goal, error } = await supabase
+      .from('weekly_goals')
+      .upsert(data, {
+        onConflict: 'week_number,year'
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return goal
+  },
+
   // Update weekly goal
   update: async (id, data) => {
     const { data: goal, error } = await supabase
